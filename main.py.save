@@ -1,0 +1,214 @@
+import requests
+import random
+import time
+import logging
+import mysql.connector
+from flask import Flask, json,request
+
+app=Flask(__name__)
+
+
+
+@app.route('/entradaAdmin', methods=['POST'])
+def entradaAdmin():
+    paqueteAdmin = request.get_json()
+    cedula = paqueteAdmin['cedula']
+    nombre = paqueteAdmin['nombre']
+    registroEnt = paqueteAdmin['registroEnt']
+    FechaHora = paqueteAdmin['FechaHora']
+    mydb = mysql.connector.connect(host="localhost",user="root",passwd="password",database="BD_7pk2")
+    mycursor = mydb.cursor()
+    sql = "INSERT INTO Administrador (cedula, registroEntrada, fechaHora, nombre) VALUES (%s, %s, %s, %s)"
+    val = (cedula, registroEnt, FechaHora, nombre)
+    mycursor.execute(sql, val)
+    mydb.commit()
+    return json.dumps(mycursor.rowcount)
+
+
+@app.route('/actualizarAdmin', methods=['POST'])
+def entradaAdmin():
+    paqueteAdmin = request.get_json()
+    cedula = paqueteAdmin['cedula']
+   
+    mydb = mysql.connector.connect(host="localhost",user="root",passwd="password",database="BD_7pk2")
+    mycursor = mydb.cursor()
+    sql = "INSERT INTO Administrador (cedula, registroEntrada, fechaHora, nombre) VALUES (%s, %s, %s, %s)"
+    val = (cedula, registroEnt, FechaHora, nombre)
+    mycursor.execute(sql, val)
+    mydb.commit()
+    return json.dumps(mycursor.rowcount)
+
+
+@app.route("/listarRestaurantes", methods=['GET'])
+def listarTodos():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  mycursor.execute("SELECT * FROM Restaurante")
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+@app.route("/listarRecomendados", methods=['GET'])
+def listarRecomendado():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  mycursor.execute("SELECT * FROM Recomendado")
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+@app.route("/listarPromos", methods=['GET'])
+def listarPromociones():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  mycursor.execute("SELECT * FROM Promocion")
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+@app.route("/cerca", methods=['POST'])
+def restaurantesCerca():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  valor = request.get_json()
+  lat=valor['latitude']
+  long=valor['longitude']
+  mycursor.execute("SELECT *, (6371 * ACOS(SIN(RADIANS(Latitude)) * SIN(RADIANS("+lat+")) + COS(RADIANS(Longitude - "+long+")) * COS(RADIANS(Latitude))"+ 
+   "* COS(RADIANS("+lat+")))) as distancia FROM Restaurante HAVING distancia < 100 ORDER BY distancia ASC")
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+
+@app.route("/fotosRestaurante", methods=['POST'])
+def fotosRestaurante():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  valor = request.get_json()
+  rest=valor['rest']
+  mycursor.execute("SELECT Foto FROM GaleriaRestaurante where NombreRestaurante="+rest)
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+@app.route("/comidaRestaurante", methods=['POST'])
+def comidaRestaurante():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  valor = request.get_json()
+  rest=valor['rest']
+  mycursor.execute("SELECT Foto FROM Menu where MenuRest="+rest)
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+
+@app.route("/listarCategoria", methods=['POST'])
+def listarCategoria():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  valor = request.get_json()
+  rest=valor['rest']
+  mycursor.execute("SELECT * FROM Restaurante where Categoria ="+rest)
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+@app.route("/restauranteNombre", methods=['POST'])
+def restauranteNombre():
+  mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="password",
+  database="depapaya")
+  mycursor = mydb.cursor()
+
+  valor = request.get_json()
+  rest=valor['rest']
+  mycursor.execute("SELECT * FROM Restaurante where Nombre ="+rest)
+  columnas= [x[0] for x in mycursor.description]
+  rv = mycursor.fetchall()
+  respuesta_json=[]
+  for res in rv:
+        respuesta_json.append(dict(zip(columnas,res)))
+  mycursor.close()
+  return json.dumps(respuesta_json)
+
+
+if __name__ == "__main__":
+  app.run(host='192.168.163.38', port=8080, debug=True)
